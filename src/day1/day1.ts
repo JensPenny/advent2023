@@ -1,3 +1,6 @@
+import { Decoder } from "../tools/Decoder.ts";
+
+
 const test = `1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
@@ -18,25 +21,16 @@ zoneight234
 main();
 
 function main() {
-    decoder()
+    const decoder = new Decoder()
+    decoder.decode("res/day1.txt")
         .then(data => data.split('\n'))
         .then(day1A)
+        .then(res => console.log('Day 1A:', res))
 
-    decoder()
+    decoder.decode("res/day1.txt")
         .then(data => data.split('\n'))
         .then(day1B)
-}
-
-async function decoder(): Promise<string> {
-    const file = await Deno.open("day1.txt", { read: true });
-    const decoder = new TextDecoder();
-    let text = "";
-    for await (const chunk of file.readable) {
-        //console.log(decoder.decode(chunk));
-        text += decoder.decode(chunk);
-    }
-    console.log(text);
-    return text;
+        .then(res => console.log('Day 1B:', res))
 }
 
 function day1A(lines: string[]): number {
@@ -54,8 +48,7 @@ function day1A(lines: string[]): number {
             return 0;
         }
     }).reduce((sum, current) => sum + current, 0);
-
-    console.log('day 1A: ', result);
+    return result;
 }
 
 function day1B(lines: string[]): number {
@@ -84,7 +77,7 @@ function day1B(lines: string[]): number {
         }
     }).reduce((sum, current) => sum + current, 0);
 
-    console.log('day 1B: ', result);
+    return result;
 }
 
 export { };
