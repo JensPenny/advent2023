@@ -29,7 +29,8 @@
     "start": "deno run --allow-read main.ts",
     "day1": "deno run -A src/day1/day1.ts",
     "day2": "deno run -A src/day2/day2.ts",
-    "day3": "deno run -A src/day3/day3.ts"
+    "day3": "deno run -A src/day3/day3.ts",
+    "day4": "deno run -A src/day4/day4.ts"
   },
   "imports": {}
 }
