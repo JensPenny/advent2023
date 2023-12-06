@@ -40,7 +40,7 @@ function day6A(toProcess: Races): number {
   //The function is abs(x^2 - {{time}}x) (somewhat easier to parse imo)
   //The max is time / 2 as an extra possible improvement for later
   const quads = function solveForTime(x: number, time: number): number {
-    return Math.abs((x * x) - (time * x));
+    return (-x * x) + (time * x);
   };
 
   let result = 1;
