@@ -34,7 +34,8 @@
     "day5": "deno run -A src/day5/day5.ts",
     "day6": "deno run -A src/day6/day6.ts", 
     "day7": "deno run -A src/day7/day7.ts",
-    "day8": "deno run -A src/day8/day8.ts"
+    "day8": "deno run -A src/day8/day8.ts",
+    "day9": "deno run -A src/day9/day9.ts"
   },
   "imports": {}
 }
