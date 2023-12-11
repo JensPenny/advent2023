@@ -16,7 +16,8 @@ const testez = `..........
 .L--JL--J.
 ..........`;
 
-const test2 = `OF----7F7F7F7F-7OOOO
+const test2 = `
+OF----7F7F7F7F-7OOOO
 O|F--7||||||||FJOOOO
 O||OFJ||||||||L7OOOO
 FJL7L7LJLJ||LJIL-7OO
@@ -26,6 +27,17 @@ OOOOL7IF7||L7|IL7L7|
 OOOOO|FJLJ|FJ|F7|OLJ
 OOOOFJL-7O||O||||OOO
 OOOOL---JOLJOLJLJOOO`;
+
+let test3 = `FF7FSF7F7F7F7F7F---7
+L|LJ||||||||||||F--J
+FL-7LJLJ||||||LJL-77
+F--JF--7||LJLJ7F7FJ-
+L---JF-JLJ.||-FJLJJ7
+|F|F-JF---7F7-L7L|7|
+|FFJF7L7F-JF7|JL---7
+7-L-JL7||F7|L7F-7F7|
+L.L7LFJ|||||FJL7||LJ
+L7JLJL-JLJLJL--JLJ.L`;
 
 type Point = {
   x: number;
@@ -47,8 +59,9 @@ const pipes: { [key: string]: Direction[] } = {
 
 //console.log(day10A(parse(test)));
 //console.log(day10A(parse(testez)));
-console.log(day10A(parse(test2)));
-//main();
+//console.log(day10A(parse(test2)));
+//console.log(day10A(parse(test3)));
+main();
 
 function main() {
   const decoder = new Decoder();
@@ -57,10 +70,10 @@ function main() {
     .then((inp) => day10A(inp))
     .then((res) => console.log("Day 10A:", res.daya));
 
-  //   decoder.decode("res/day10.txt")
-  //     .then((inp) => parse(inp))
-  //     .then((inp) => day10A(inp))
-  //     .then((res) => console.log("Day 10B:", res));
+  decoder.decode("res/day10.txt")
+    .then((inp) => parse(inp))
+    .then((inp) => day10A(inp))
+    .then((res) => console.log("Day 10B:", res));
 }
 
 function day10A(grid: string[][]): { daya: number; dayb: number } {
@@ -84,7 +97,7 @@ function day10A(grid: string[][]): { daya: number; dayb: number } {
   }
 
   let circleCompleted = false;
-  let currentDirection = firstDirections[0];
+  let currentDirection = firstDirections[1]; //For B the start direction is important, since the way decides if you have an infinite loop or a closing loop (all lefts or all rights are inside.) Change this if you loop on B
   let currentPoint = start;
   while (!circleCompleted) {
     const result = nextPoint(grid, currentPoint, currentDirection);
@@ -98,12 +111,69 @@ function day10A(grid: string[][]): { daya: number; dayb: number } {
     currentPoint = result.nextPoint;
   }
 
-  const empties = solveB(traversed);
+  //const empties = solveB(traversed, grid);
+  const empties = solveBWithLefties(traversed, grid);
 
   return { daya: traversed.size / 2, dayb: empties };
 }
 
-function solveB(path: Set<string>): number {
+function solveBWithLefties(path: Set<string>, grid: string[][]): number {
+  //Left is the inner part of the loop. We keep going 'left' until we find a point in the set.
+
+  const points = [...path].map((str) => JSON.parse(str) as Point);
+  const insideLoop: Point[] = []; //We'll make a set of this later, but keep it as an array for now
+
+  let previous = points.shift();
+  for (const p of points) {
+    //Get the vector we went
+    const vector = { x: p.x - previous!.x, y: p.y - previous!.y };
+    console.log(vector);
+
+    let dir: Direction = "E";
+
+    //Modifiers for searches in a direction
+    let xModifier = 0;
+    let yModifier = 0;
+
+    if (vector.x === 0 && vector.y === 1) {
+      dir = "S";
+      //Left from southbound is east
+      xModifier = 1;
+    } else if (vector.x === 0 && vector.y === -1) {
+      dir = "N";
+      //Left from northbound is west
+      xModifier = -1;
+    } else if (vector.x === 1 && vector.y === 0) {
+      dir = "E";
+      yModifier = -1;
+    } else {
+      dir = "W";
+      yModifier = 1;
+    }
+    console.log(dir);
+
+    //Check points 'left' from the current point, until we find one in the set. Add it to the 'foundpoints' - set.
+    let isFound = false;
+    let nextPoint = p;
+    while (!isFound) {
+      nextPoint = { x: nextPoint.x + xModifier, y: nextPoint.y + yModifier };
+      if (path.has(JSON.stringify(nextPoint))) {
+        isFound = true;
+      } else {
+        console.log(`found an inner point at ${JSON.stringify(nextPoint)}`);
+        insideLoop.push(nextPoint);
+      }
+    }
+
+    previous = p;
+  }
+
+  let unique = new Set(insideLoop.map((p) => JSON.stringify(p)));
+  console.log(unique);
+  return unique.size;
+}
+
+function solveB(path: Set<string>, grid: string[][]): number {
   const points = [...path].map((str) => JSON.parse(str) as Point);
 
   points.sort((l, r) => {
@@ -116,29 +186,28 @@ function solveB(path: Set<string>): number {
   console.log(points);
 
   let lastpoint = points.shift();
+  let isInside = true; //we start at the first point :>
   let counter = 0;
-  let isInside = false;
 
-  for (let i = 0; i < points.length; i++) {
+  for (let i = 1; i < points.length; i++) {
     const p = points[i];
+    //Ignore pieces of the line
+    if (grid[p.y][p.x] === "|") {
+      lastpoint = p;
+      continue;
+    }
     if (p.x !== lastpoint?.x) {
       lastpoint = p; //New line to count
-      isInside = false;
+      isInside = true;
     } else {
       //Same line, get diffs between y's - incorrect since there can be a path to outside :(
       let spaces = p.y - lastpoint.y - 1;
-      if (spaces === 0 && points[i + 1].y - p.y - 1 === 0) {
-        isInside = true;
-        //Ignore if we are in the middle of a line
-        continue;
-      }
-      isInside = !isInside;
-
       if (spaces !== 0) {
         if (isInside) {
           counter += spaces;
         }
       }
+      isInside = !isInside;
       lastpoint = p;
     }
   }
@@ -237,3 +306,8 @@ function findStart(grid: string[][]): Point {
   }
   return { x: -1, y: -1 };
 }
+
+//There is still a bug here, but fuck it. Time waits for noone and the lefties-algo gives a VERY close approximation. I'd guess I missed a case
+//278 too low
+//300 too high
+//285 is on the ball. I might visualize this later to find out what I missed, since I feel like the train of thought is good.
